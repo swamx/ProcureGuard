@@ -1,100 +1,77 @@
 # ProcureGuard
 
-**Autonomous Vendor Invoice & Compliance Agent on Evolus + AMD**
+**Fraud-Aware Accounts Payable Agent on Evolus + AMD**
 
-ProcureGuard is an agentic business-process automation project for the **Evolus Business Agents on AMD** challenge. It automates a real Accounts Payable workflow from invoice intake through document understanding, vendor and purchase-order validation, risk analysis, human escalation, and ERP update.
+ProcureGuard is an entry for the **Evolus Business Agents on AMD** track of the AMD Developer Hackathon: ACT III. An agent runs a real Accounts Payable process in Evolus — from an invoice email to a paid invoice in ERPNext — reasoning with an open model served on AMD, and hands anything suspicious to a person.
 
 > **Design principle:** The model reasons. Tools act. Policies govern. Evolus orchestrates. Humans remain in control of exceptions.
 
 ## Business Problem
 
-Accounts Payable teams repeatedly receive invoices, extract fields, identify vendors, locate purchase orders, check duplicates, validate amounts and payment details, assess risk, update ERP systems, and route exceptions to people. ProcureGuard combines workflow orchestration and agentic AI to automate this process safely.
+AP teams turn invoice emails into payments every day: read the document, find the vendor and purchase order, check for duplicates, confirm the amount and payment details, enter it in the ERP and escalate exceptions. The most costly failure is paying a fraudster who impersonates a known vendor and asks for payment to a new bank account. ProcureGuard automates the routine cases and reliably stops that one.
+
+## How It Maps to the Track
+
+| Track asks the agent to… | ProcureGuard |
+|---|---|
+| Take an input (email, PDF, form, chat) | Invoice email with PDF attachment via an Evolus email trigger |
+| Reason with an open model on AMD | Qwen vision-language model served by vLLM on ROCm, AMD MI300X |
+| Run an Evolus workflow | Case workflow branches on the decision |
+| Turn documents into data | `extract_invoice` with a text-layer cross-check |
+| Use AI Tools | Vendor, PO, duplicate, bank, sender-domain and risk checks |
+| Update another system | Creates the Purchase Invoice in ERPNext |
+| Hand the case to a person | Evolus review task with evidence, plus vendor verification via the contact on file |
 
 ## Architecture
 
 ```text
-Invoice / Email / Web Form
-          |
-          v
-       Evolus
-  Workflow + Case
-          |
-          v
- Document Processing
-          |
-          v
-   ProcureGuard Agent
-  FastAPI + PydanticAI/
-       LangGraph
-          |
-          v
- Open Model on AMD
-  vLLM/SGLang + ROCm
-          |
-   +------+------+----------------+
-   |             |                |
-   v             v                v
-ERPNext      Policy Engine     Risk Tools
-Vendor/PO    Deterministic     Compliance
-Invoices     Controls          Validation
-   |             |                |
-   +-------------+----------------+
-                 |
-                 v
-       APPROVE / REVIEW / REJECT
-                 |
-                 v
-              Evolus
-                 |
-       +---------+---------+
-       |                   |
-       v                   v
- ERPNext Update       Human Review
+Invoice email
+      |
+      v
+    Evolus  -- workflow, agent, human review task, notifications
+      |
+      |  AI Tools (HTTPS)
+      v
+ProcureGuard service  -- extraction, checks, policy engine, guarded ERP write, audit
+      |                         |
+      v                         v
+   ERPNext               vLLM on ROCm (AMD MI300X)
+                                |
+                          Open Qwen VL model
+      |
+      v
+APPROVE -> ERPNext Purchase Invoice
+HUMAN_REVIEW -> Evolus review task
+REJECT -> notify and close
 ```
 
-## Core Capabilities
+See [Technical Architecture](docs/Technical-Architecture.md) for Plan A (Evolus agent on the AMD model) and Plan B (Evolus calls ProcureGuard).
 
-- PDF/email invoice intake
-- Structured invoice extraction
-- Vendor resolution and PO matching
-- Duplicate invoice and bank-account-change detection
-- Vendor risk/compliance checks
-- Open-model reasoning and tool selection on AMD
-- Deterministic policy enforcement
-- Straight-through processing for low-risk cases
-- Human-in-the-loop escalation
-- ERPNext integration
-- Audit trail and OpenTelemetry observability
-- Prompt-injection-resistant document processing
+## Demo Scenarios
 
-## Open-Source Stack
+1. **Normal invoice** — all checks pass; the Purchase Invoice is created in ERPNext.
+2. **Lookalike domain + bank change** (headline) — email from `acme-logistlcs.com` asks for payment to a new account; payment is blocked, a review task is created and the vendor is contacted via the details on file.
+3. **Duplicate invoice** — rejected; retries never create a second ERP record.
+4. **PO amount variance** — above the 5% threshold; routed to review.
+5. **Hidden-text injection** — invisible text tries to make the model extract the trusted bank account; the cross-check catches it.
+
+## Stack
 
 | Component | Technology |
 |---|---|
 | Business workflow | Evolus |
-| ERP | ERPNext |
-| Agent service | Python + FastAPI |
-| Agent orchestration | PydanticAI and/or LangGraph |
-| Model | Qwen / Llama / Mistral |
-| Model serving | vLLM / SGLang |
-| GPU runtime | ROCm |
-| Compute | AMD GPU |
-| State/Audit | PostgreSQL |
-| Cache/coordination | Redis |
-| Observability | OpenTelemetry |
-| Invoice baseline | invoice2data |
-| Document datasets | InvoiceOCR-Synth, CORD, SROIE |
-
-## Demo Scenarios
-
-1. **Normal invoice** — validations pass and a Purchase Invoice is created automatically.
-2. **Bank-account mismatch** — payment is blocked and routed to human review.
-3. **Duplicate invoice** — duplicate is detected and no second ERP transaction is created.
-4. **PO amount mismatch** — policy threshold is exceeded and the case is escalated.
-5. **Prompt injection** — malicious instructions embedded in a PDF are treated as untrusted data and cannot bypass policy or tools.
+| Agent service | Python, FastAPI, PydanticAI |
+| Model | Qwen vision-language model (final size chosen after the pre-event spike) |
+| Model serving | vLLM on ROCm |
+| Compute | AMD Instinct MI300X (AMD Developer Cloud) |
+| ERP | ERPNext (Docker) |
+| State, audit, idempotency | PostgreSQL |
+| PDF text layer | pdfplumber |
+| Data | Synthetic "Nova Industries" vendors, POs and invoices |
 
 ## Documentation
 
+- [Implementation Plan](docs/Implementation-Plan.md) — timeline, open questions, submission checklist, risks
 - [Proposal](docs/Proposal.md)
 - [Business Architecture](docs/Business-Architecture.md)
 - [Technical Architecture](docs/Technical-Architecture.md)
@@ -103,8 +80,8 @@ Invoices     Controls          Validation
 
 ## MVP Success Criteria
 
-ProcureGuard succeeds when it can ingest an invoice, extract structured information, use an AMD-hosted open model to reason about the case, call controlled business tools, apply deterministic policies, execute the appropriate Evolus workflow path, update ERPNext for safe cases, and route risky cases to a human with supporting evidence.
+An invoice email arrives in Evolus; the document is turned into data on the AMD-hosted model; AI Tools check it against ERPNext; the deterministic policy engine decides; safe invoices become ERPNext Purchase Invoices automatically; the fraud and injection cases land in an Evolus review task with evidence; and there are **zero wrong auto-approvals** across the evaluation set.
 
 ## Safety Boundary
 
-The language model never receives unrestricted ERP or database access. Enterprise actions are exposed only through strongly typed, authenticated, authorized, auditable, and idempotent tools. Financial authorization rules remain deterministic, and high-risk or uncertain cases fail closed into human review.
+The model never has ERP or database credentials. It can call read-only tools; writes are triggered by the Evolus workflow after a decision, and the ERP write is refused unless a stored `APPROVE` exists for the case. Financial decisions are deterministic, every required check must run, and anything uncertain fails closed into human review.

@@ -11,9 +11,9 @@
 
 ProcureGuard is an AI-powered business agent that automates vendor invoice processing from receipt through payment approval. Organizations receive invoices through email, PDFs, portals and APIs. Processing normally requires employees to extract invoice data, identify vendors, locate purchase orders, validate amounts and payment details, assess risk, update enterprise systems and decide whether a transaction can proceed.
 
-ProcureGuard combines **Evolus** for durable workflow orchestration, an **open model running on AMD** for document understanding and agent reasoning, controlled **AI tools** for enterprise operations, **ERPNext** as the demonstration ERP, deterministic policies for financial controls, and **human-in-the-loop** review for high-risk or ambiguous cases.
+ProcureGuard combines **Evolus** for email intake, workflow, human review tasks and notifications, an **open model running on AMD** for document understanding and agent reasoning, controlled **AI Tools** for enterprise operations, **ERPNext** as the demonstration ERP, deterministic policies for financial controls, and **human-in-the-loop** review for high-risk or ambiguous cases.
 
-The objective is not simply to use an LLM to read invoices. The objective is to allow an AI agent to safely execute a real business process end-to-end.
+The objective is not simply to use an LLM to read invoices — invoice extraction is a common demo. The objective is to let an AI agent safely run a real business process end to end **and stop invoice payment fraud**: a vendor lookalike emailing a genuine-looking invoice with new bank details.
 
 ## Business Problem
 
@@ -37,28 +37,31 @@ Traditional workflow automation handles predictable steps but struggles with uns
 
 ## Proposed Solution
 
-An invoice enters through email, upload, API, web form or chat. Evolus creates a case and invokes document processing. The normalized invoice is passed to ProcureGuard, whose AMD-hosted open model determines what information is needed and selects approved tools.
+An invoice email arrives in the AP mailbox. An Evolus email trigger creates a case and hands the attachment to the agent, which reasons with an open model on AMD, turns the document into data and calls ProcureGuard's AI Tools. A deterministic policy engine decides; the Evolus workflow then creates the ERPNext Purchase Invoice, opens a review task for a person, or rejects the invoice.
 
-Representative tools:
+Tools (full catalogue in [Technical Architecture](Technical-Architecture.md#tool-catalogue)):
 
 ```text
+extract_invoice()
 get_vendor()
 get_purchase_order()
 check_duplicate_invoice()
 validate_invoice_against_po()
 verify_bank_account()
+verify_sender_domain()
 check_vendor_risk()
-calculate_risk()
-create_erp_invoice()
-request_human_review()
+evaluate_case()
+create_purchase_invoice()
+create_review_task()
+request_vendor_verification()
 send_notification()
 ```
 
-The model does not directly manipulate enterprise databases. Tools form the controlled boundary for external actions.
+The model does not directly manipulate enterprise databases. Tools form the controlled boundary for external actions, and write tools are triggered by the Evolus workflow only after a decision.
 
 ## Example Risk Scenario
 
-An invoice is extracted as:
+An email arrives from `billing@acme-logistlcs.com` — one letter away from the vendor's real domain, `acme-logistics.com` — saying the vendor has changed banks. The attached invoice is extracted as:
 
 ```json
 {
@@ -71,20 +74,20 @@ An invoice is extracted as:
 }
 ```
 
-The trusted vendor master contains approved bank account `****3921`. The PO and amount are valid, but the payment account has changed. ProcureGuard must not process the transaction automatically.
+The trusted vendor master contains approved bank account `****3921`. The PO and amount are valid, but the payment account has changed and the sender is not the vendor. ProcureGuard must not process the transaction automatically.
 
 Expected result:
 
 ```json
 {
   "decision": "HUMAN_REVIEW",
-  "risk_level": "HIGH",
-  "reason_codes": ["BANK_ACCOUNT_MISMATCH"],
-  "recommended_action": "BLOCK_PAYMENT_AND_VERIFY_VENDOR"
+  "risk_level": "CRITICAL",
+  "reason_codes": ["BANK_ACCOUNT_MISMATCH", "SENDER_DOMAIN_MISMATCH"],
+  "recommended_action": "VERIFY_VIA_KNOWN_CONTACT"
 }
 ```
 
-Evolus routes the case to Accounts Payable for review.
+Evolus blocks the payment, opens a review task for Accounts Payable with the evidence, and sends a verification request to the vendor's contact on file — never to the email's reply-to address.
 
 ## Objectives
 
@@ -110,9 +113,13 @@ The same case progresses from document intake through validation, decision, syst
 
 The system explicitly recognizes when automation must stop and human judgment is required.
 
+### Fraud-First, Not OCR-First
+
+The headline scenario is a realistic payment-fraud attempt, and the injection defence works even if the model is fooled: extracted values are cross-checked against the document's text layer and the vendor master.
+
 ### Tool-Based Security
 
-The model can only interact with approved, strongly typed and auditable tools.
+The model can only interact with approved, strongly typed and auditable tools, and the ERP write is refused without a stored approval.
 
 ### Explainable Decisions
 
@@ -120,20 +127,22 @@ Business decisions produce evidence and reason codes rather than relying on hidd
 
 ## MVP Scope
 
-- PDF invoice ingestion
-- Structured extraction
-- Vendor lookup
-- PO lookup and comparison
+- Invoice email intake through an Evolus email trigger (PDF upload as secondary)
+- Structured extraction on the AMD model with text-layer cross-check
+- Vendor lookup and PO lookup/comparison
 - Duplicate detection
-- Bank-account validation
+- Bank-account and sender-domain validation
 - Basic vendor risk checks
-- Risk classification
+- Deterministic policy engine with completeness gate
 - Automatic processing of safe cases
-- Human escalation of risky cases
+- Evolus review task for risky cases, plus vendor verification via the contact on file
 - ERPNext Purchase Invoice creation
 - Notifications
-- Complete audit trail
-- Prompt-injection security scenario
+- Audit trail
+- Hidden-text prompt-injection scenario
+- 100-case evaluation run on AMD with measured metrics
+
+Delivery timeline: see [Implementation Plan](Implementation-Plan.md).
 
 ## Out of Scope
 
@@ -151,9 +160,13 @@ Invoice -> Extract -> Vendor -> PO -> Duplicate Check -> Bank Check
 ### Risk Case
 
 ```text
-Invoice -> Extract -> Vendor -> PO -> Bank Mismatch
-        -> High Risk -> Payment Block -> Human Review
+Lookalike email -> Extract -> Vendor -> PO -> Bank + Sender Mismatch
+                -> Critical Risk -> Payment Block -> Review Task + Vendor Verification
 ```
+
+### Safety Target
+
+Zero wrong auto-approvals across the evaluation set.
 
 ## Business Value
 
