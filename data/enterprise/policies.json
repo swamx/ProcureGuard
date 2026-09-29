@@ -1,0 +1,22 @@
+{
+  "po_variance_pct_max": 5.0,
+  "auto_approval_limit": 50000.00,
+  "fraud_weights": {
+    "SENDER_DOMAIN_MISMATCH": 40,
+    "BANK_ACCOUNT_MISMATCH": 60
+  },
+  "hard_review_codes": [
+    "BANK_ACCOUNT_MISMATCH",
+    "SENDER_DOMAIN_MISMATCH",
+    "EXTRACTED_FIELD_CONFLICT",
+    "PO_AMOUNT_VARIANCE",
+    "CURRENCY_MISMATCH",
+    "UNKNOWN_VENDOR",
+    "VENDOR_HIGH_RISK",
+    "ABOVE_AUTO_APPROVAL_LIMIT",
+    "REQUIRED_CHECK_MISSING",
+    "TOOL_UNAVAILABLE"
+  ],
+  "hard_reject_codes": ["DUPLICATE_INVOICE", "VENDOR_BLOCKED"],
+  "request_information_codes": ["MISSING_PO"]
+}

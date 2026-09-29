@@ -1,0 +1,13 @@
+[
+  {
+    "vendor_id": "VEND-001",
+    "invoice_number": "INV-10293",
+    "invoice_date": "2026-08-14",
+    "posting_date": "2026-08-15",
+    "currency": "USD",
+    "lines": [
+      { "description": "July freight services", "qty": 1, "rate": 12450.00 }
+    ],
+    "note": "Already booked; CASE-003 resubmits this invoice number."
+  }
+]

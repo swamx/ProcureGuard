@@ -1,0 +1,57 @@
+[
+  {
+    "vendor_id": "VEND-001",
+    "name": "Acme Logistics Ltd",
+    "status": "ACTIVE",
+    "currency": "USD",
+    "bank_account_no": "000451773921",
+    "registered_domain": "acme-logistics.com",
+    "contact_name": "Dana Whitfield",
+    "contact_email": "ap@acme-logistics.com",
+    "contact_phone": "+1 555 0142"
+  },
+  {
+    "vendor_id": "VEND-002",
+    "name": "Brightline Office Supplies",
+    "status": "ACTIVE",
+    "currency": "USD",
+    "bank_account_no": "000872310455",
+    "registered_domain": "brightline-supplies.com",
+    "contact_name": "Marco Ruiz",
+    "contact_email": "billing@brightline-supplies.com",
+    "contact_phone": "+1 555 0187"
+  },
+  {
+    "vendor_id": "VEND-003",
+    "name": "Kestrel Industrial Parts",
+    "status": "ACTIVE",
+    "currency": "USD",
+    "bank_account_no": "000339104862",
+    "registered_domain": "kestrel-parts.com",
+    "contact_name": "Priya Anand",
+    "contact_email": "accounts@kestrel-parts.com",
+    "contact_phone": "+1 555 0163"
+  },
+  {
+    "vendor_id": "VEND-004",
+    "name": "Orion Packaging Co",
+    "status": "BLOCKED",
+    "currency": "USD",
+    "bank_account_no": "000615527740",
+    "registered_domain": "orion-packaging.com",
+    "contact_name": "Lee Carter",
+    "contact_email": "finance@orion-packaging.com",
+    "contact_phone": "+1 555 0129"
+  },
+  {
+    "vendor_id": "VEND-005",
+    "name": "Harbor Consulting Group",
+    "status": "ACTIVE",
+    "currency": "USD",
+    "bank_account_no": "000724098816",
+    "registered_domain": "harbor-consulting.com",
+    "contact_name": "Sam Okafor",
+    "contact_email": "invoices@harbor-consulting.com",
+    "contact_phone": "+1 555 0176"
+  }
+]

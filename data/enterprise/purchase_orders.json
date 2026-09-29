@@ -1,0 +1,43 @@
+[
+  {
+    "po_number": "PO-89231",
+    "vendor_id": "VEND-001",
+    "transaction_date": "2026-09-01",
+    "schedule_date": "2026-09-30",
+    "currency": "USD",
+    "lines": [
+      { "description": "Q3 freight and warehousing services", "qty": 1, "rate": 48750.00 }
+    ]
+  },
+  {
+    "po_number": "PO-10034",
+    "vendor_id": "VEND-002",
+    "transaction_date": "2026-09-05",
+    "schedule_date": "2026-09-30",
+    "currency": "USD",
+    "lines": [
+      { "description": "Office furniture - ergonomic chairs", "qty": 50, "rate": 240.00 },
+      { "description": "Office furniture - standing desks", "qty": 5, "rate": 600.00 }
+    ]
+  },
+  {
+    "po_number": "PO-10058",
+    "vendor_id": "VEND-003",
+    "transaction_date": "2026-09-10",
+    "schedule_date": "2026-10-10",
+    "currency": "USD",
+    "lines": [
+      { "description": "Hydraulic pump assemblies", "qty": 12, "rate": 1850.00 }
+    ]
+  },
+  {
+    "po_number": "PO-10071",
+    "vendor_id": "VEND-005",
+    "transaction_date": "2026-09-12",
+    "schedule_date": "2026-10-15",
+    "currency": "USD",
+    "lines": [
+      { "description": "Procurement process advisory - September", "qty": 1, "rate": 9600.00 }
+    ]
+  }
+]

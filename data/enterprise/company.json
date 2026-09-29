@@ -1,0 +1,16 @@
+{
+  "company_name": "Nova Industries",
+  "company_abbr": "NOVA",
+  "country": "United States",
+  "currency": "USD",
+  "timezone": "America/New_York",
+  "fiscal_year_start": "2026-01-01",
+  "fiscal_year_end": "2026-12-31",
+  "bank": "Synthetic National Bank",
+  "item": {
+    "item_code": "SVC-GENERAL",
+    "item_name": "Vendor Services",
+    "item_group": "Services",
+    "uom": "Nos"
+  }
+}

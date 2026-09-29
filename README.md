@@ -132,6 +132,20 @@ Two business metrics anchor the evaluation:
 
 Results are shown as a decision confusion matrix plus extraction accuracy, escalation recall, false-escalation rate, injection containment, latency, throughput and AMD GPU utilization. All reported performance numbers are measured, never hand-entered.
 
+## Local Setup
+
+Requirements: Docker, Python 3.11+, `pip install requests`, GNU make (optional; the commands it wraps are in the [Makefile](Makefile)).
+
+```bash
+make erp-up        # start ERPNext v16 on http://localhost:8080 and wait until it is ready (first start takes a few minutes)
+make seed          # load Nova Industries from data/enterprise/*.json (safe to re-run)
+make verify        # print vendors, bank accounts, POs and booked invoices
+make reset         # void invoices created by demo runs, keep seeded data
+make erp-rebuild   # delete all ERPNext data and recreate + seed from scratch
+```
+
+ERPNext login: `Administrator` / `admin` (local demo only; override with `ERPNEXT_ADMIN_PASSWORD`). The seed adds three custom fields: `Supplier.procureguard_vendor_id`, `Supplier.registered_email_domain` and `Purchase Order.po_number`, so records can be looked up by the IDs used in the demo (`VEND-001`, `PO-89231`).
+
 ## Documentation
 
 - [Implementation Plan](docs/Implementation-Plan.md) — timeline, model gate, vertical-slice priority, open questions, submission checklist and risks
